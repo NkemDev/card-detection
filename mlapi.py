@@ -1,3 +1,4 @@
+from http.client import HTTPException
 from fastapi import FastAPI
 from pydantic import BaseModel
 import pickle
@@ -7,7 +8,7 @@ app = FastAPI()
 
 class ScoringItem(BaseModel):
 	V1: float
-	V2: float #0.01,
+	V2: float#0.01,
 	V3: float #0.001,
 	V4: float #/0.4,
 	V5: float #/0.5,
@@ -41,6 +42,11 @@ with open('dt_modell.pkl', 'rb') as f:
 
 @app.post('/')
 async def scoring_endpoint(item:ScoringItem):
-	df = pd.DataFrame([item.dict().values()], columns=item.dict().keys())
-	yhat = model.predict(df)
-	return {"prediction":int(yhat)}
+		df = pd.DataFrame([item.dict().values()], columns=item.dict().keys())
+		if df.isnull().values.any() ==False:
+			yhat = model.predict(df)
+			return {"prediction":int(yhat)}
+		else:
+			raise HTTPException(status_code =404, detail='Item not found')
+		
+
